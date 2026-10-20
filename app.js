@@ -105,7 +105,7 @@ const defaultProgress = { unlocked: 1, completed: [], sessions: [], errors: {}, 
 let progress = loadProgress();
 let currentLesson = Math.min(Number(localStorage.getItem("klavishi-current")) || 0, progress.unlocked - 1);
 let targetText = "", typed = "", startedAt = null, timer = null, errors = 0, adaptiveMode = false;
-let errorStreak = 0, errorsSincePause = 0, pausedMs = 0, pauseStartedAt = null, pauseTimer = null;
+let errorStreak = 0, errorsSincePause = 0, pauseTimer = null;
 
 const $ = (id) => document.getElementById(id);
 const els = { lessonList: $("lessonList"), exerciseText: $("exerciseText"), typingZone: $("typingZone"), input: $("typingInput"), wpm: $("wpmValue"), accuracy: $("accuracyValue"), time: $("timeValue"), keyboard: $("keyboard"), completion: $("completion") };
@@ -141,8 +141,8 @@ function selectLesson(index) {
 }
 
 function resetExercise(customText) {
-  clearInterval(timer); clearInterval(pauseTimer); timer = null; pauseTimer = null; startedAt = null; typed = ""; errors = 0;
-  errorStreak = 0; errorsSincePause = 0; pausedMs = 0; pauseStartedAt = null; $("pauseOverlay").hidden = true;
+  clearInterval(timer); clearTimeout(pauseTimer); timer = null; pauseTimer = null; startedAt = null; typed = ""; errors = 0;
+  errorStreak = 0; errorsSincePause = 0; $("coachToast").hidden = true;
   const lesson = LESSONS[currentLesson]; targetText = customText || lesson.text;
   $("lessonNumber").textContent = adaptiveMode ? "Адаптивна практика" : `Урок ${currentLesson + 1}`;
   $("lessonTitle").textContent = adaptiveMode ? "Слабкі клавіші" : lesson.title;
@@ -151,7 +151,7 @@ function resetExercise(customText) {
   updateStats(); renderText(); highlightNext();
 }
 
-function focusTyping() { if (els.completion.hidden && $("pauseOverlay").hidden) { els.typingZone.classList.add("focused"); els.input.focus({ preventScroll: true }); } }
+function focusTyping() { if (els.completion.hidden) { els.typingZone.classList.add("focused"); els.input.focus({ preventScroll: true }); } }
 function renderText() {
   els.exerciseText.innerHTML = [...targetText].map((char, i) => {
     let cls = i < typed.length ? (typed[i] === char ? "correct" : "wrong") : i === typed.length ? "current" : "";
@@ -184,38 +184,24 @@ function updateFingerCoach(rawChar) {
 }
 function startTimer() { if (!startedAt) { startedAt = Date.now(); timer = setInterval(updateStats, 500); } }
 function metrics() {
-  const activePause = pauseStartedAt ? Date.now() - pauseStartedAt : 0;
-  const seconds = startedAt ? Math.max(1, (Date.now() - startedAt - pausedMs - activePause) / 1000) : 0;
+  const seconds = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : 0;
   const correct = [...typed].filter((c, i) => c === targetText[i]).length;
   return { seconds, wpm: seconds ? Math.round((correct / 5) / (seconds / 60)) : 0, accuracy: typed.length ? Math.round(correct / typed.length * 100) : 100 };
 }
 function updateStats() { const m = metrics(); els.wpm.textContent = m.wpm; els.accuracy.textContent = `${m.accuracy}%`; els.time.textContent = `${Math.floor(m.seconds / 60)}:${String(Math.floor(m.seconds % 60)).padStart(2,"0")}`; }
 function beep() { if (!progress.sound) return; try { const ctx = new AudioContext(); const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 155; g.gain.setValueAtTime(.035, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .08); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .08); } catch {} }
 
-function showCoachPause() {
-  if (!$("pauseOverlay").hidden) return;
+function showCoachToast() {
   const message = PAUSE_MESSAGES[(errors + currentLesson) % PAUSE_MESSAGES.length];
   $("pauseTitle").textContent = message.title; $("pauseMessage").textContent = message.text;
-  $("pauseOverlay").hidden = false; els.typingZone.classList.remove("focused"); els.input.blur();
-  errorStreak = 0; errorsSincePause = 0; pauseStartedAt = Date.now();
-  let seconds = 6; const button = $("resumeButton"); button.disabled = true;
-  button.textContent = `Продовжити через ${seconds} с`;
-  $("pauseProgress").style.width = "0%";
-  clearInterval(pauseTimer); pauseTimer = setInterval(() => {
-    seconds--; button.textContent = seconds > 0 ? `Продовжити через ${seconds} с` : "Продовжити";
-    $("pauseProgress").style.width = `${(6 - seconds) / 6 * 100}%`;
-    if (seconds <= 0) { clearInterval(pauseTimer); pauseTimer = null; button.disabled = false; button.focus(); }
-  }, 1000);
+  $("coachToast").hidden = false; errorStreak = 0; errorsSincePause = 0;
+  clearTimeout(pauseTimer); pauseTimer = setTimeout(hideCoachToast, 6500);
 }
 
-function resumeAfterPause() {
-  if ($("resumeButton").disabled) return;
-  if (pauseStartedAt) pausedMs += Date.now() - pauseStartedAt;
-  pauseStartedAt = null; $("pauseOverlay").hidden = true; focusTyping(); updateStats();
-}
+function hideCoachToast() { clearTimeout(pauseTimer); pauseTimer = null; $("coachToast").hidden = true; }
 
 function handleInput(event) {
-  event.preventDefault(); if (!els.completion.hidden || !$("pauseOverlay").hidden || event.ctrlKey || event.metaKey || event.altKey) return;
+  event.preventDefault(); if (!els.completion.hidden || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key === "Backspace") { typed = typed.slice(0, -1); renderText(); highlightNext(); updateStats(); return; }
   if (event.key.length !== 1 || typed.length >= targetText.length) return;
   startTimer(); const expected = targetText[typed.length]; typed += event.key;
@@ -223,7 +209,7 @@ function handleInput(event) {
   else { errorStreak = 0; }
   renderText(); highlightNext(); updateStats();
   if (typed.length === targetText.length) finishExercise();
-  else if (errorStreak >= 3 || errorsSincePause >= 5) showCoachPause();
+  else if (errorStreak >= 3 || errorsSincePause >= 5) showCoachToast();
 }
 
 function finishExercise() {
@@ -273,7 +259,7 @@ els.lessonList.addEventListener("click", e => { const b=e.target.closest("[data-
 els.typingZone.addEventListener("click", focusTyping); els.typingZone.addEventListener("focus", focusTyping); els.input.addEventListener("keydown", handleInput);
 $("restartButton").addEventListener("click", () => resetExercise(adaptiveMode ? buildAdaptiveText() : undefined)); $("nextButton").addEventListener("click", nextAction);
 $("soundToggle").addEventListener("click", () => { progress.sound=!progress.sound; saveProgress(); updateSound(); });
-$("resumeButton").addEventListener("click", resumeAfterPause);
+$("toastClose").addEventListener("click", () => { hideCoachToast(); focusTyping(); });
 $("adaptiveButton").addEventListener("click", startAdaptive);
 $("resetProgress").addEventListener("click", () => { if(confirm("Скинути всі результати й відкриті уроки?")){ progress={...defaultProgress,completed:[],sessions:[],errors:{},lastDays:[]}; currentLesson=0; saveProgress(); renderProgress(); renderLessons(); } });
 function updateSound() { $("soundToggle").classList.toggle("off", !progress.sound); $("soundToggle").setAttribute("aria-label", progress.sound ? "Вимкнути звук" : "Увімкнути звук"); }

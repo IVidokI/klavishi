@@ -113,17 +113,15 @@
     </section>
   </main>
 
-  <div class="pause-overlay" id="pauseOverlay" hidden>
-    <section class="pause-card" role="dialog" aria-modal="true" aria-labelledby="pauseTitle" aria-describedby="pauseMessage">
-      <div class="pause-illustration" aria-hidden="true"><span>⌨</span><i>☕</i></div>
-      <div class="eyebrow">Пауза наставника</div>
+  <aside class="coach-toast" id="coachToast" hidden role="status" aria-live="polite">
+    <div class="toast-icon" aria-hidden="true">☕</div>
+    <div class="toast-copy">
+      <div class="eyebrow">Підказка наставника</div>
       <h2 id="pauseTitle">Клавіатура нікуди не втече</h2>
       <p id="pauseMessage">Розправ плечі, видихни й дай пальцям секунду пригадати дорогу.</p>
-      <div class="breath-line"><span id="pauseProgress"></span></div>
-      <button class="primary-button pause-button" id="resumeButton" disabled>Продовжити через <span id="pauseSeconds">6</span> с</button>
-      <small>Час цієї паузи не впливає на швидкість набору</small>
-    </section>
-  </div>
+    </div>
+    <button class="toast-close" id="toastClose" aria-label="Закрити підказку">×</button>
+  </aside>
 
   <footer><span>Клавіші · безкоштовний тренажер</span><span>Прогрес не залишає твій пристрій</span></footer>
   <script src="app.js"></script>

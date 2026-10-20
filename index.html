@@ -30,7 +30,7 @@
           <p class="lead">15 хвилин щодня. Спочатку точність — швидкість прийде за нею.</p>
 
           <div class="overall-progress" aria-label="Прогрес курсу">
-            <div class="progress-meta"><span>Твій шлях</span><strong id="courseProgressLabel">0 / 12</strong></div>
+            <div class="progress-meta"><span>Твій шлях</span><strong id="courseProgressLabel">0 / 24</strong></div>
             <div class="progress-track"><span id="courseProgressBar"></span></div>
           </div>
 
@@ -61,6 +61,14 @@
           <div class="coach-tip" id="coachTip"><span class="tip-icon">✦</span><p><strong>Підказка:</strong> тримай вказівні пальці на <kbd>А</kbd> та <kbd>О</kbd>. Не дивись на клавіатуру.</p></div>
 
           <div class="keyboard-wrap">
+            <div class="finger-coach" id="fingerCoach" aria-live="polite">
+              <span class="finger-hand" id="fingerHand">Ліва рука</span>
+              <span class="finger-dot index" id="fingerDot"></span>
+              <strong id="fingerName">вказівний палець</strong>
+              <span class="finger-action">натискає</span>
+              <kbd id="fingerKey">А</kbd>
+              <span class="shift-hint" id="shiftHint" hidden></span>
+            </div>
             <div class="hands-labels" aria-hidden="true"><span>ліва рука</span><span>права рука</span></div>
             <div class="keyboard" id="keyboard" aria-label="Схема української клавіатури"></div>
             <div class="finger-legend" aria-label="Кольори пальців">

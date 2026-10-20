@@ -12,21 +12,35 @@ const LESSONS = [
   { title: "Коми й крапки", keys: ",.", text: "Ранок настав, місто прокинулось. День почався.", tip: "Після розділового знака завжди став пробіл." },
   { title: "Числа", keys: "1234567890", text: "У класі 24 учні. Урок триває 45 хвилин.", tip: "Для цифр використовуй той самий палець, що й у його колонці." },
   { title: "Ритм і речення", keys: "all", text: "Добра звичка формується крок за кроком. Спокійний ритм допомагає друкувати впевнено.", tip: "Набирай у рівному темпі. Не прискорюйся на знайомих словах." },
-  { title: "Фінальний тест", keys: "all", text: "Щоденна практика перетворює складний рух на легку навичку. Дивись на екран, довіряй пальцям і бережи точність.", tip: "Розслаб плечі, дихай рівно й покажи свій найкращий результат." }
+  { title: "Проміжний тест", keys: "all", text: "Щоденна практика перетворює складний рух на легку навичку. Дивись на екран, довіряй пальцям і бережи точність.", tip: "Розслаб плечі, дихай рівно й покажи свій найкращий результат." },
+  { title: "Ліва рука · верх", keys: "йцукег", text: "кук еге цей кущ гук цукор кегля ущух кущик", tip: "Відпрацьовуємо рухи лівої руки до верхнього ряду." },
+  { title: "Права рука · верх", keys: "ншщзхї", text: "ніж ніжно шишка щезне хижий їхній захист", tip: "Права кисть нерухома — до клавіші тягнеться лише палець." },
+  { title: "Ліва рука · низ", keys: "ячсми", text: "час мрія сам маяк яма смак миша масив", tip: "Після нижнього ряду повертай пальці на Ф І В А." },
+  { title: "Права рука · низ", keys: "итьбю", text: "мить бути любити битва тюбик біль люди", tip: "Після нижнього ряду повертай пальці на О Л Д Ж." },
+  { title: "Апостроф", keys: "'", text: "м'ята п'ять сім'я ім'я зв'язок пам'ять об'єкт", tip: "Апостроф натискає мізинець лівої руки." },
+  { title: "Довгі слова", keys: "all", text: "відповідальність підприємство виробництво співробітник вдосконалення", tip: "Діли довге слово на знайомі рухи, але не зупиняй ритм." },
+  { title: "Часті сполучення", keys: "all", text: "ст пр но ен ов ти ня ро ві ко ст пр но ен", tip: "Повторюй часті пари плавно, без паузи між літерами." },
+  { title: "Рівний ритм", keys: "all", text: "тиха вода тече поволі теплий вітер колише траву", tip: "Намагайся робити однакову паузу між усіма натисканнями." },
+  { title: "Великі літери й Shift", keys: "shift", text: "Україна Київ Чернігів Житомир Харків Запоріжжя", tip: "Shift завжди натискає мізинець руки, протилежної до літери." },
+  { title: "Числа в роботі", keys: "1234567890", text: "Замовлення 1548 виконано на 98 відсотків за 3 дні.", tip: "Після цифри повертай палець на основний ряд." },
+  { title: "Розділові знаки", keys: ",.'", text: "Так, усе готово. Пам'ятай, точність є основою.", tip: "Не поспішай біля розділових знаків і став пробіл після них." },
+  { title: "Фінальний тест", keys: "all", text: "Майстерність зростає непомітно. Сьогодні ти друкуєш точніше, а завтра швидше. Продовжуй практикуватися щодня.", tip: "Не дивись на клавіші. Довіряй пальцям і тримай рівний темп." }
 ];
 
 const ROWS = [
-  ["й","ц","у","к","е","н","г","ш","щ","з","х","ї"],
+  ["'","й","ц","у","к","е","н","г","ш","щ","з","х","ї"],
   ["ф","і","в","а","п","р","о","л","д","ж","є"],
   ["я","ч","с","м","и","т","ь","б","ю",",","."]
 ];
 const FINGERS = {
-  "й":"pinky","ф":"pinky","я":"pinky","1":"pinky", "ц":"ring","і":"ring","ч":"ring","2":"ring",
+  "'":"pinky","й":"pinky","ф":"pinky","я":"pinky","1":"pinky", "ц":"ring","і":"ring","ч":"ring","2":"ring",
   "у":"middle","в":"middle","с":"middle","3":"middle", "к":"index","а":"index","м":"index","е":"index","п":"index","и":"index","4":"index","5":"index",
   "н":"index","р":"index","т":"index","г":"index","о":"index","ь":"index","6":"index","7":"index", "ш":"middle","л":"middle","б":"middle","8":"middle",
   "щ":"ring","д":"ring","ю":"ring","9":"ring", "з":"pinky","х":"pinky","ї":"pinky","ж":"pinky","є":"pinky",",":"pinky",".":"pinky","0":"pinky", " ":"thumb"
 };
 const STORAGE_KEY = "klavishi-progress-v1";
+const LEFT_KEYS = "'йцукенфівапрячсми12345";
+const FINGER_NAMES = { pinky: "мізинець", ring: "безіменний палець", middle: "середній палець", index: "вказівний палець", thumb: "великий палець" };
 const defaultProgress = { unlocked: 1, completed: [], sessions: [], errors: {}, sound: true, lastDays: [] };
 let progress = loadProgress();
 let currentLesson = Math.min(Number(localStorage.getItem("klavishi-current")) || 0, progress.unlocked - 1);
@@ -35,7 +49,13 @@ let targetText = "", typed = "", startedAt = null, timer = null, errors = 0, ada
 const $ = (id) => document.getElementById(id);
 const els = { lessonList: $("lessonList"), exerciseText: $("exerciseText"), typingZone: $("typingZone"), input: $("typingInput"), wpm: $("wpmValue"), accuracy: $("accuracyValue"), time: $("timeValue"), keyboard: $("keyboard"), completion: $("completion") };
 
-function loadProgress() { try { return { ...defaultProgress, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) }; } catch { return { ...defaultProgress }; } }
+function loadProgress() {
+  try {
+    const saved = { ...defaultProgress, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) };
+    if (saved.unlocked === 12 && saved.completed.includes(11)) saved.unlocked = 13;
+    return saved;
+  } catch { return { ...defaultProgress }; }
+}
 function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
 function esc(char) { const s = document.createElement("span"); s.textContent = char; return s.innerHTML; }
 
@@ -79,9 +99,25 @@ function highlightNext() {
   document.querySelectorAll(".key.target").forEach(k => k.classList.remove("target"));
   if (typed.length < targetText.length) {
     const char = targetText[typed.length].toLowerCase();
-    const key = document.querySelector(`[data-key="${CSS.escape(char === "'" ? "" : char)}"]`);
+    const key = document.querySelector(`[data-key="${CSS.escape(char)}"]`);
     if (key) key.classList.add("target");
+    updateFingerCoach(targetText[typed.length]);
   }
+}
+
+function updateFingerCoach(rawChar) {
+  const char = rawChar.toLowerCase();
+  const finger = FINGERS[char] || "pinky";
+  const isSpace = char === " ";
+  const isUpper = rawChar !== char && /[а-яіїєґ]/i.test(rawChar);
+  const hand = isSpace ? "Обидві руки" : LEFT_KEYS.includes(char) ? "Ліва рука" : "Права рука";
+  $("fingerHand").textContent = hand;
+  $("fingerName").textContent = isSpace ? "будь-який великий палець" : FINGER_NAMES[finger];
+  $("fingerKey").textContent = isSpace ? "ПРОБІЛ" : rawChar.toUpperCase();
+  $("fingerDot").className = `finger-dot ${finger}`;
+  const shift = $("shiftHint");
+  shift.hidden = !isUpper;
+  shift.textContent = isUpper ? `+ Shift (${hand === "Ліва рука" ? "права" : "ліва"} рука)` : "";
 }
 function startTimer() { if (!startedAt) { startedAt = Date.now(); timer = setInterval(updateStats, 500); } }
 function metrics() {

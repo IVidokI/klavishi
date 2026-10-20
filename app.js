@@ -1,6 +1,6 @@
 "use strict";
 
-const LESSONS = [
+const BASE_LESSONS = [
   { title: "Основна позиція", keys: "ао", text: "ао оа аа оо ао оа ааа ооо аоа оао", tip: "Тримай вказівні пальці на А та О. Відчуй маленькі виступи на клавішах." },
   { title: "Вказівні пальці", keys: "апро", text: "пора пара опора пора папа арка про пора опора", tip: "Після Р і П повертай пальці на базові А та О." },
   { title: "Середні пальці", keys: "авол", text: "лава овал воля ловила валова олово лава", tip: "Клавіші В і Л натискають середні пальці." },
@@ -24,10 +24,58 @@ const LESSONS = [
   { title: "Великі літери й Shift", keys: "shift", text: "Україна Київ Чернігів Житомир Харків Запоріжжя", tip: "Shift завжди натискає мізинець руки, протилежної до літери." },
   { title: "Числа в роботі", keys: "1234567890", text: "Замовлення 1548 виконано на 98 відсотків за 3 дні.", tip: "Після цифри повертай палець на основний ряд." },
   { title: "Розділові знаки", keys: ",.'", text: "Так, усе готово. Пам'ятай, точність є основою.", tip: "Не поспішай біля розділових знаків і став пробіл після них." },
-  { title: "Фінальний тест", keys: "all", text: "Майстерність зростає непомітно. Сьогодні ти друкуєш точніше, а завтра швидше. Продовжуй практикуватися щодня.", tip: "Не дивись на клавіші. Довіряй пальцям і тримай рівний темп." }
+  { title: "Вхідний тест", keys: "all", text: "Майстерність зростає непомітно. Сьогодні ти друкуєш точніше, а завтра швидше. Продовжуй практикуватися щодня.", tip: "Цей результат стане точкою відліку для поглибленого курсу." }
+];
+
+// Оригінальна українська програма, побудована за принципом послідовних
+// багатокрокових вправ: рухи → слова → речення → контроль.
+const SOLO_MODULES = [
+  { name: "Домашній ряд", focus: "фіва олдж", words: ["фіалка","вода","олово","діло","жало","алея"], sentence: "Лагідна вода омиває довгі вали." },
+  { name: "Вказівні пальці", focus: "апр оен", words: ["пора","рано","перо","небо","опера","арена"], sentence: "Раннє небо поволі набирає барви." },
+  { name: "Середні пальці", focus: "вул шоб", words: ["лава","слово","було","шовк","воля","обвал"], sentence: "Вдале слово будує добру розмову." },
+  { name: "Безіменні пальці", focus: "іц дщю", words: ["ціна","діти","дощ","люди","цілий","подія"], sentence: "Дощ ущух, і люди вийшли надвір." },
+  { name: "Мізинці", focus: "фйя жзхїє", words: ["їжак","захід","хвиля","якір","фраза","єдність"], sentence: "Яскрава хвиля з'єднує краї." },
+  { name: "Ліва рука", focus: "йцукен фівапр ячсми", words: ["час","міра","праця","сцена","мрія","кучер"], sentence: "Праця і час навчають майстерності." },
+  { name: "Права рука", focus: "гшщзхї олджє тьбю", words: ["життя","люди","ніжно","дощик","люблю","зілля"], sentence: "Дощ тихо шелестить біля будинку." },
+  { name: "Чергування рук", focus: "ка но ми ре", words: ["країна","родина","картина","мелодія","дорога","погода"], sentence: "Рівне чергування рук створює ритм." },
+  { name: "Апостроф", focus: "' м' п' в' б'", words: ["п'ять","м'ята","пам'ять","зв'язок","об'єкт","сім'я"], sentence: "Пам'ять зберігає зв'язок із сім'єю." },
+  { name: "Подвоєння", focus: "нн тт лл сс", words: ["знання","життя","стаття","щоденний","навчання","зусилля"], sentence: "Щоденні зусилля дають упевненість." },
+  { name: "Великі літери", focus: "К У Л Д О Х", words: ["Україна","Київ","Львів","Одеса","Харків","Дніпро"], sentence: "Україна починається з кожного з нас." },
+  { name: "Кома і крапка", focus: ", . , .", words: ["спокійно,","точно,","рівно.","уважно,","впевнено.","щодня."], sentence: "Друкуй спокійно, точно і впевнено." },
+  { name: "Короткі слова", focus: "і в на до за із", words: ["він","вона","вони","цей","коли","тоді"], sentence: "Коли є мета, тоді знаходиться шлях." },
+  { name: "Довгі слова", focus: "ність ство ення увати", words: ["відповідальність","виробництво","планування","спілкування","вдосконалення","результативність"], sentence: "Послідовність перетворює вправу на вміння." },
+  { name: "Числа", focus: "12 34 56 78 90", words: ["2026","1548","42","365","100","95"], sentence: "За 15 хвилин виконай 3 вправи з точністю 95 відсотків." },
+  { name: "Робочі фрази", focus: "план звіт лист дані", words: ["звіт","таблиця","показник","продажі","замовлення","результат"], sentence: "Готовий звіт містить точні дані та зрозумілий висновок." },
+  { name: "Стійкий темп", focus: "та то ти те ту", words: ["темп","такт","ритм","потік","спокій","увага"], sentence: "Стійкий темп важливіший за коротке прискорення." },
+  { name: "Витривалість", focus: "уважність точність терпіння", words: ["поступово","безпомилково","зосереджено","самостійно","послідовно","наполегливо"], sentence: "Уважність і терпіння допомагають завершити складну справу." },
+  { name: "Майстерність", focus: "думка слово клавіша", words: ["майстерність","впевненість","швидкість","точність","свобода","звичка"], sentence: "Пальці знаходять клавіші, а думка вільно стає текстом." }
+];
+
+function makeSoloLessons() {
+  return SOLO_MODULES.flatMap((module, moduleIndex) => {
+    const words = module.words.join(" ");
+    const warmup = `${module.focus} ${module.focus} ${module.focus}`;
+    const isLast = moduleIndex === SOLO_MODULES.length - 1;
+    return [
+      { title: `${module.name} · рухи`, keys: "all", text: warmup, tip: "Працюй повільно. Запам'ятовуй не літери, а точні рухи пальців." },
+      { title: `${module.name} · слова`, keys: "all", text: `${words} ${words}`, tip: "Точність важливіша за швидкість. Після кожного руху повертайся на основний ряд." },
+      { title: `${module.name} · речення`, keys: "all", text: `${module.sentence} ${module.sentence}`, tip: "Дивись лише на текст і тримай однаковий ритм." },
+      { title: isLast ? "Фінальний іспит" : `${module.name} · контроль`, keys: "all", text: `${words}. ${module.sentence}`, tip: isLast ? "Порівняй результат із вхідним тестом і привітай себе з завершенням курсу." : "Контрольна спроба. Зосередься на чистому наборі без виправлень." }
+    ];
+  });
+}
+
+const LESSONS = [...BASE_LESSONS, ...makeSoloLessons()];
+if (LESSONS.length !== 100) throw new Error("Навчальний курс має містити рівно 100 уроків.");
+const PHASES = ["Основа", "Координація", "Усі ряди", "Точність", "Майстерність"];
+const ENCOURAGEMENT = [
+  "Ще один рух став автоматичним.", "Терпіння сьогодні дає швидкість завтра.",
+  "Не поспішай — точні пальці самі знайдуть темп.", "Ти вже друкуєш упевненіше, ніж на початку.",
+  "Складна вправа означає, що навичка росте."
 ];
 
 const ROWS = [
+  ["1","2","3","4","5","6","7","8","9","0"],
   ["'","й","ц","у","к","е","н","г","ш","щ","з","х","ї"],
   ["ф","і","в","а","п","р","о","л","д","ж","є"],
   ["я","ч","с","м","и","т","ь","б","ю",",","."]
@@ -62,7 +110,8 @@ function esc(char) { const s = document.createElement("span"); s.textContent = c
 function renderLessons() {
   els.lessonList.innerHTML = LESSONS.map((lesson, i) => {
     const done = progress.completed.includes(i), locked = i >= progress.unlocked;
-    return `<button class="lesson-item ${i === currentLesson && !adaptiveMode ? "active" : ""} ${locked ? "locked" : ""}" data-lesson="${i}" ${locked ? "disabled" : ""}>
+    const phase = i % 20 === 0 ? `<div class="phase-label"><span>${PHASES[Math.floor(i / 20)]}</span><small>${i + 1}–${i + 20}</small></div>` : "";
+    return `${phase}<button class="lesson-item ${i === currentLesson && !adaptiveMode ? "active" : ""} ${locked ? "locked" : ""}" data-lesson="${i}" ${locked ? "disabled" : ""}>
       <span class="lesson-index">${done ? "✓" : i + 1}</span><span class="lesson-name">${lesson.title}</span><span class="lesson-state">${locked ? "·" : done ? "" : "→"}</span></button>`;
   }).join("");
   $("courseProgressLabel").textContent = `${progress.completed.length} / ${LESSONS.length}`;
@@ -143,8 +192,9 @@ function finishExercise() {
   progress.sessions.push(session); progress.sessions = progress.sessions.slice(-50);
   if (!adaptiveMode && passed) { if (!progress.completed.includes(currentLesson)) progress.completed.push(currentLesson); progress.unlocked = Math.min(LESSONS.length, Math.max(progress.unlocked, currentLesson + 2)); }
   updateStreak(); saveProgress(); renderLessons();
-  $("completionTitle").textContent = passed ? (m.accuracy >= 98 ? "Майже бездоганно!" : "Урок зараховано!") : "Спробуй ще раз";
-  $("completionSummary").textContent = `${m.wpm} слів/хв · точність ${m.accuracy}%${passed ? "" : " · потрібно 90%"}`;
+  $("completionTitle").textContent = passed ? (m.accuracy >= 98 ? "Майже бездоганно!" : "Урок зараховано!") : "Спокійно. Спробуй ще раз";
+  const encouragement = passed ? ENCOURAGEMENT[currentLesson % ENCOURAGEMENT.length] : "Помилка — це підказка, який рух варто повторити.";
+  $("completionSummary").textContent = `${m.wpm} слів/хв · точність ${m.accuracy}%${passed ? "" : " · потрібно 90%"} · ${encouragement}`;
   $("nextButton").textContent = !passed ? "Повторити →" : currentLesson < LESSONS.length - 1 && !adaptiveMode ? "Наступний урок →" : "Ще раз →";
   els.completion.hidden = false; els.typingZone.classList.remove("focused");
 }

@@ -1,0 +1,154 @@
+"use strict";
+
+const LESSONS = [
+  { title: "Основна позиція", keys: "ао", text: "ао оа аа оо ао оа ааа ооо аоа оао", tip: "Тримай вказівні пальці на А та О. Відчуй маленькі виступи на клавішах." },
+  { title: "Вказівні пальці", keys: "апро", text: "пора пара опора пора папа арка про пора опора", tip: "Після Р і П повертай пальці на базові А та О." },
+  { title: "Середні пальці", keys: "авол", text: "лава овал воля ловила валова олово лава", tip: "Клавіші В і Л натискають середні пальці." },
+  { title: "Безіменні пальці", keys: "афіволд", text: "діло фіалка вода далі віл діва філолог", tip: "Не зміщуй всю кисть — працює лише потрібний палець." },
+  { title: "Увесь середній ряд", keys: "фівапролджє", text: "джерело правда поле віра орел пожежа алея", tip: "Повертай усі пальці на Ф І В А — О Л Д Ж." },
+  { title: "Верхній ряд", keys: "йцукенгшщзхї", text: "книга щука небо життя кухня жінка гуща", tip: "Тягнися пальцем угору, не піднімаючи долоню." },
+  { title: "Нижній ряд", keys: "ячсмитьбю", text: "мить час сім'я місто м'яч батько щастя", tip: "До нижнього ряду веди палець, а не всю руку." },
+  { title: "Великі літери", keys: "shift", text: "Київ Україна Дніпро Львів Одеса Карпати", tip: "Shift натискай мізинцем протилежної руки." },
+  { title: "Коми й крапки", keys: ",.", text: "Ранок настав, місто прокинулось. День почався.", tip: "Після розділового знака завжди став пробіл." },
+  { title: "Числа", keys: "1234567890", text: "У класі 24 учні. Урок триває 45 хвилин.", tip: "Для цифр використовуй той самий палець, що й у його колонці." },
+  { title: "Ритм і речення", keys: "all", text: "Добра звичка формується крок за кроком. Спокійний ритм допомагає друкувати впевнено.", tip: "Набирай у рівному темпі. Не прискорюйся на знайомих словах." },
+  { title: "Фінальний тест", keys: "all", text: "Щоденна практика перетворює складний рух на легку навичку. Дивись на екран, довіряй пальцям і бережи точність.", tip: "Розслаб плечі, дихай рівно й покажи свій найкращий результат." }
+];
+
+const ROWS = [
+  ["й","ц","у","к","е","н","г","ш","щ","з","х","ї"],
+  ["ф","і","в","а","п","р","о","л","д","ж","є"],
+  ["я","ч","с","м","и","т","ь","б","ю",",","."]
+];
+const FINGERS = {
+  "й":"pinky","ф":"pinky","я":"pinky","1":"pinky", "ц":"ring","і":"ring","ч":"ring","2":"ring",
+  "у":"middle","в":"middle","с":"middle","3":"middle", "к":"index","а":"index","м":"index","е":"index","п":"index","и":"index","4":"index","5":"index",
+  "н":"index","р":"index","т":"index","г":"index","о":"index","ь":"index","6":"index","7":"index", "ш":"middle","л":"middle","б":"middle","8":"middle",
+  "щ":"ring","д":"ring","ю":"ring","9":"ring", "з":"pinky","х":"pinky","ї":"pinky","ж":"pinky","є":"pinky",",":"pinky",".":"pinky","0":"pinky", " ":"thumb"
+};
+const STORAGE_KEY = "klavishi-progress-v1";
+const defaultProgress = { unlocked: 1, completed: [], sessions: [], errors: {}, sound: true, lastDays: [] };
+let progress = loadProgress();
+let currentLesson = Math.min(Number(localStorage.getItem("klavishi-current")) || 0, progress.unlocked - 1);
+let targetText = "", typed = "", startedAt = null, timer = null, errors = 0, adaptiveMode = false;
+
+const $ = (id) => document.getElementById(id);
+const els = { lessonList: $("lessonList"), exerciseText: $("exerciseText"), typingZone: $("typingZone"), input: $("typingInput"), wpm: $("wpmValue"), accuracy: $("accuracyValue"), time: $("timeValue"), keyboard: $("keyboard"), completion: $("completion") };
+
+function loadProgress() { try { return { ...defaultProgress, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) }; } catch { return { ...defaultProgress }; } }
+function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+function esc(char) { const s = document.createElement("span"); s.textContent = char; return s.innerHTML; }
+
+function renderLessons() {
+  els.lessonList.innerHTML = LESSONS.map((lesson, i) => {
+    const done = progress.completed.includes(i), locked = i >= progress.unlocked;
+    return `<button class="lesson-item ${i === currentLesson && !adaptiveMode ? "active" : ""} ${locked ? "locked" : ""}" data-lesson="${i}" ${locked ? "disabled" : ""}>
+      <span class="lesson-index">${done ? "✓" : i + 1}</span><span class="lesson-name">${lesson.title}</span><span class="lesson-state">${locked ? "·" : done ? "" : "→"}</span></button>`;
+  }).join("");
+  $("courseProgressLabel").textContent = `${progress.completed.length} / ${LESSONS.length}`;
+  $("courseProgressBar").style.width = `${progress.completed.length / LESSONS.length * 100}%`;
+}
+
+function renderKeyboard() {
+  els.keyboard.innerHTML = ROWS.map(row => `<div class="key-row">${row.map(k => `<div class="key ${FINGERS[k]} ${"фіваолдж".includes(k) ? "home" : ""}" data-key="${k}">${k.toUpperCase()}</div>`).join("")}</div>`).join("") + `<div class="key-row"><div class="key space thumb" data-key=" ">ПРОБІЛ</div></div>`;
+}
+
+function selectLesson(index) {
+  if (index >= progress.unlocked) return;
+  adaptiveMode = false; currentLesson = index; localStorage.setItem("klavishi-current", index); resetExercise(); renderLessons();
+}
+
+function resetExercise(customText) {
+  clearInterval(timer); timer = null; startedAt = null; typed = ""; errors = 0;
+  const lesson = LESSONS[currentLesson]; targetText = customText || lesson.text;
+  $("lessonNumber").textContent = adaptiveMode ? "Адаптивна практика" : `Урок ${currentLesson + 1}`;
+  $("lessonTitle").textContent = adaptiveMode ? "Слабкі клавіші" : lesson.title;
+  $("coachTip").innerHTML = `<span class="tip-icon">✦</span><p><strong>Підказка:</strong> ${adaptiveMode ? "Найчастіше повторюємо символи, у яких були помилки." : lesson.tip}</p>`;
+  els.completion.hidden = true; els.input.value = ""; els.typingZone.classList.remove("focused");
+  updateStats(); renderText(); highlightNext();
+}
+
+function focusTyping() { if (els.completion.hidden) { els.typingZone.classList.add("focused"); els.input.focus({ preventScroll: true }); } }
+function renderText() {
+  els.exerciseText.innerHTML = [...targetText].map((char, i) => {
+    let cls = i < typed.length ? (typed[i] === char ? "correct" : "wrong") : i === typed.length ? "current" : "";
+    return `<span class="${cls}">${char === " " ? "&nbsp;" : esc(char)}</span>`;
+  }).join("");
+}
+function highlightNext() {
+  document.querySelectorAll(".key.target").forEach(k => k.classList.remove("target"));
+  if (typed.length < targetText.length) {
+    const char = targetText[typed.length].toLowerCase();
+    const key = document.querySelector(`[data-key="${CSS.escape(char === "'" ? "" : char)}"]`);
+    if (key) key.classList.add("target");
+  }
+}
+function startTimer() { if (!startedAt) { startedAt = Date.now(); timer = setInterval(updateStats, 500); } }
+function metrics() {
+  const seconds = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : 0;
+  const correct = [...typed].filter((c, i) => c === targetText[i]).length;
+  return { seconds, wpm: seconds ? Math.round((correct / 5) / (seconds / 60)) : 0, accuracy: typed.length ? Math.round(correct / typed.length * 100) : 100 };
+}
+function updateStats() { const m = metrics(); els.wpm.textContent = m.wpm; els.accuracy.textContent = `${m.accuracy}%`; els.time.textContent = `${Math.floor(m.seconds / 60)}:${String(Math.floor(m.seconds % 60)).padStart(2,"0")}`; }
+function beep() { if (!progress.sound) return; try { const ctx = new AudioContext(); const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 155; g.gain.setValueAtTime(.035, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .08); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .08); } catch {} }
+
+function handleInput(event) {
+  event.preventDefault(); if (!els.completion.hidden || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (event.key === "Backspace") { typed = typed.slice(0, -1); renderText(); highlightNext(); updateStats(); return; }
+  if (event.key.length !== 1 || typed.length >= targetText.length) return;
+  startTimer(); const expected = targetText[typed.length]; typed += event.key;
+  if (event.key !== expected) { errors++; const key = expected.toLowerCase(); if (key.trim()) progress.errors[key] = (progress.errors[key] || 0) + 1; beep(); }
+  renderText(); highlightNext(); updateStats(); if (typed.length === targetText.length) finishExercise();
+}
+
+function finishExercise() {
+  clearInterval(timer); timer = null; const m = metrics(); const passed = m.accuracy >= 90;
+  const session = { date: new Date().toISOString(), wpm: m.wpm, accuracy: m.accuracy, seconds: Math.round(m.seconds), lesson: adaptiveMode ? "adaptive" : currentLesson };
+  progress.sessions.push(session); progress.sessions = progress.sessions.slice(-50);
+  if (!adaptiveMode && passed) { if (!progress.completed.includes(currentLesson)) progress.completed.push(currentLesson); progress.unlocked = Math.min(LESSONS.length, Math.max(progress.unlocked, currentLesson + 2)); }
+  updateStreak(); saveProgress(); renderLessons();
+  $("completionTitle").textContent = passed ? (m.accuracy >= 98 ? "Майже бездоганно!" : "Урок зараховано!") : "Спробуй ще раз";
+  $("completionSummary").textContent = `${m.wpm} слів/хв · точність ${m.accuracy}%${passed ? "" : " · потрібно 90%"}`;
+  $("nextButton").textContent = !passed ? "Повторити →" : currentLesson < LESSONS.length - 1 && !adaptiveMode ? "Наступний урок →" : "Ще раз →";
+  els.completion.hidden = false; els.typingZone.classList.remove("focused");
+}
+function updateStreak() { const day = new Date().toISOString().slice(0,10); const days = new Set(progress.lastDays || []); days.add(day); progress.lastDays = [...days].sort().slice(-60); }
+function nextAction() { const m = metrics(); if (m.accuracy >= 90 && !adaptiveMode && currentLesson < LESSONS.length - 1) selectLesson(currentLesson + 1); else resetExercise(adaptiveMode ? buildAdaptiveText() : undefined); }
+
+function buildAdaptiveText() {
+  const weak = Object.entries(progress.errors).sort((a,b) => b[1]-a[1]).slice(0,6).map(([k]) => k);
+  if (!weak.length) return "точність ритм практика клавіатура звичка швидкість";
+  const words = ["практика","точність","клавіатура","швидкість","ритм","навичка","робота","увага","україна","щодня","впевнено","спокійно","друкувати","пальці"];
+  const ranked = words.sort((a,b) => weak.reduce((s,k)=>s+(b.split(k).length-1),0)-weak.reduce((s,k)=>s+(a.split(k).length-1),0));
+  return [...ranked.slice(0,8), weak.join(" "), ranked[0], ranked[1]].join(" ");
+}
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `${name}View`));
+  document.querySelectorAll(".nav-link").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  if (name === "progress") renderProgress(); window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function renderProgress() {
+  const sessions = progress.sessions, accuracies = sessions.map(s=>s.accuracy);
+  $("bestWpm").textContent = sessions.length ? Math.max(...sessions.map(s=>s.wpm)) : 0;
+  $("avgAccuracy").textContent = sessions.length ? `${Math.round(accuracies.reduce((a,b)=>a+b,0)/accuracies.length)}%` : "—";
+  $("totalMinutes").textContent = Math.round(sessions.reduce((a,s)=>a+s.seconds,0)/60);
+  $("streakDays").textContent = calculateStreak();
+  const recent = sessions.slice(-7), max = Math.max(30, ...recent.map(s=>s.wpm));
+  $("historyChart").innerHTML = recent.length ? recent.map(s => `<div class="chart-col"><div class="chart-bar" data-value="${s.wpm}" style="height:${Math.max(4,s.wpm/max*100)}%"></div><small>${new Date(s.date).toLocaleDateString("uk-UA",{day:"2-digit",month:"2-digit"})}</small></div>`).join("") : `<div class="chart-empty">Заверши першу вправу — тут з’явиться графік.</div>`;
+  const weak = Object.entries(progress.errors).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  $("weakKeys").innerHTML = weak.length ? weak.map(([k,n])=>`<span class="weak-key" title="${n} помилок">${esc(k.toUpperCase())}</span>`).join("") : `<span class="weak-empty">Поки немає даних про помилки.</span>`;
+}
+function calculateStreak() { let streak=0, d=new Date(); const days=new Set(progress.lastDays||[]); while(days.has(d.toISOString().slice(0,10))){streak++;d.setDate(d.getDate()-1);} return streak; }
+function startAdaptive() { adaptiveMode = true; showView("practice"); resetExercise(buildAdaptiveText()); renderLessons(); }
+
+document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+els.lessonList.addEventListener("click", e => { const b=e.target.closest("[data-lesson]"); if(b) selectLesson(Number(b.dataset.lesson)); });
+els.typingZone.addEventListener("click", focusTyping); els.typingZone.addEventListener("focus", focusTyping); els.input.addEventListener("keydown", handleInput);
+$("restartButton").addEventListener("click", () => resetExercise(adaptiveMode ? buildAdaptiveText() : undefined)); $("nextButton").addEventListener("click", nextAction);
+$("soundToggle").addEventListener("click", () => { progress.sound=!progress.sound; saveProgress(); updateSound(); });
+$("adaptiveButton").addEventListener("click", startAdaptive);
+$("resetProgress").addEventListener("click", () => { if(confirm("Скинути всі результати й відкриті уроки?")){ progress={...defaultProgress,completed:[],sessions:[],errors:{},lastDays:[]}; currentLesson=0; saveProgress(); renderProgress(); renderLessons(); } });
+function updateSound() { $("soundToggle").classList.toggle("off", !progress.sound); $("soundToggle").setAttribute("aria-label", progress.sound ? "Вимкнути звук" : "Увімкнути звук"); }
+
+renderKeyboard(); renderLessons(); resetExercise(); updateSound();

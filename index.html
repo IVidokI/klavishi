@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f6f3ed">
+  <meta name="description" content="Безкоштовний тренажер сліпого набору українською: уроки, статистика та адаптивна практика.">
+  <title>Клавіші — тренажер сліпого набору</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Клавіші — на головну"><span class="brand-mark">К</span><span>Клавіші</span></a>
+    <nav class="nav" aria-label="Основна навігація">
+      <button class="nav-link active" data-view="practice">Тренування</button>
+      <button class="nav-link" data-view="progress">Мій прогрес</button>
+      <button class="nav-link" data-view="guide">Як навчатися</button>
+    </nav>
+    <button class="icon-button" id="soundToggle" title="Звук помилки" aria-label="Вимкнути звук">♪</button>
+  </header>
+
+  <main>
+    <section id="practiceView" class="view active">
+      <div class="practice-layout">
+        <aside class="course-panel">
+          <div class="eyebrow">Курс · українська</div>
+          <h1>Друкуй думки,<br><em>не шукай клавіші.</em></h1>
+          <p class="lead">15 хвилин щодня. Спочатку точність — швидкість прийде за нею.</p>
+
+          <div class="overall-progress" aria-label="Прогрес курсу">
+            <div class="progress-meta"><span>Твій шлях</span><strong id="courseProgressLabel">0 / 12</strong></div>
+            <div class="progress-track"><span id="courseProgressBar"></span></div>
+          </div>
+
+          <div class="lesson-list" id="lessonList"></div>
+        </aside>
+
+        <section class="trainer-card" aria-labelledby="lessonTitle">
+          <div class="trainer-head">
+            <div>
+              <div class="eyebrow" id="lessonNumber">Урок 1</div>
+              <h2 id="lessonTitle">Основна позиція</h2>
+            </div>
+            <button class="secondary-button" id="restartButton" title="Почати вправу знову">↻ <span>Спочатку</span></button>
+          </div>
+
+          <div class="live-stats" aria-live="polite">
+            <div><span class="stat-value" id="wpmValue">0</span><span class="stat-label">слів/хв</span></div>
+            <div><span class="stat-value" id="accuracyValue">100%</span><span class="stat-label">точність</span></div>
+            <div><span class="stat-value" id="timeValue">0:00</span><span class="stat-label">час</span></div>
+          </div>
+
+          <div class="typing-zone" id="typingZone" tabindex="0" role="textbox" aria-label="Поле тренування. Почніть друкувати текст, що показано на екрані.">
+            <div class="focus-hint" id="focusHint">Клацни тут і починай друкувати</div>
+            <div class="exercise-text" id="exerciseText"></div>
+            <textarea id="typingInput" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-hidden="true"></textarea>
+          </div>
+
+          <div class="coach-tip" id="coachTip"><span class="tip-icon">✦</span><p><strong>Підказка:</strong> тримай вказівні пальці на <kbd>А</kbd> та <kbd>О</kbd>. Не дивись на клавіатуру.</p></div>
+
+          <div class="keyboard-wrap">
+            <div class="hands-labels" aria-hidden="true"><span>ліва рука</span><span>права рука</span></div>
+            <div class="keyboard" id="keyboard" aria-label="Схема української клавіатури"></div>
+            <div class="finger-legend" aria-label="Кольори пальців">
+              <span><i class="dot pinky"></i>мізинець</span><span><i class="dot ring"></i>безіменний</span><span><i class="dot middle"></i>середній</span><span><i class="dot index"></i>вказівний</span><span><i class="dot thumb"></i>великий</span>
+            </div>
+          </div>
+
+          <div class="completion" id="completion" hidden>
+            <div class="completion-badge">✓</div>
+            <div><div class="eyebrow">Вправу завершено</div><h3 id="completionTitle">Чудова робота!</h3><p id="completionSummary"></p></div>
+            <button class="primary-button" id="nextButton">Наступний урок <span>→</span></button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="progressView" class="view content-view">
+      <div class="page-heading"><div class="eyebrow">Особиста статистика</div><h1>Твій прогрес</h1><p>Усе зберігається лише у твоєму браузері.</p></div>
+      <div class="stat-grid">
+        <article class="metric-card accent"><span>Найкраща швидкість</span><strong id="bestWpm">0</strong><small>слів за хвилину</small></article>
+        <article class="metric-card"><span>Середня точність</span><strong id="avgAccuracy">—</strong><small>за завершені вправи</small></article>
+        <article class="metric-card"><span>Час практики</span><strong id="totalMinutes">0</strong><small>хвилин разом</small></article>
+        <article class="metric-card"><span>Серія</span><strong id="streakDays">0</strong><small>днів поспіль</small></article>
+      </div>
+      <div class="progress-columns">
+        <article class="panel"><div class="panel-head"><div><div class="eyebrow">Останні 7 занять</div><h2>Швидкість і точність</h2></div></div><div class="chart" id="historyChart"></div></article>
+        <article class="panel"><div class="eyebrow">Розумна практика</div><h2>Слабкі клавіші</h2><p>Тренажер рахує помилки й частіше повертає складні символи.</p><div class="weak-keys" id="weakKeys"></div><button class="primary-button full" id="adaptiveButton">Тренувати слабкі клавіші</button></article>
+      </div>
+      <button class="text-button danger" id="resetProgress">Скинути весь прогрес</button>
+    </section>
+
+    <section id="guideView" class="view content-view">
+      <div class="page-heading"><div class="eyebrow">Методика</div><h1>Як навчитися швидше</h1><p>Не марафон за вечір, а коротка практика, яку легко повторити завтра.</p></div>
+      <div class="guide-grid">
+        <article class="guide-card"><span class="guide-num">01</span><h2>Точність до швидкості</h2><p>Тримай точність не нижче 95%. Ритм важливіший за поспіх: помилки закріплюють зайві рухи.</p></article>
+        <article class="guide-card"><span class="guide-num">02</span><h2>10–15 хвилин щодня</h2><p>Короткі регулярні сесії краще підтримують увагу. Завершуй до появи втоми в кистях.</p></article>
+        <article class="guide-card"><span class="guide-num">03</span><h2>Не дивись униз</h2><p>Орієнтуйся на виступи клавіш <kbd>А</kbd> та <kbd>О</kbd>. Якщо загубив позицію — знайди їх на дотик.</p></article>
+        <article class="guide-card"><span class="guide-num">04</span><h2>Спокійні руки</h2><p>Лікті розслаблені, зап’ястя прямі, клавіші натискай легко. Зроби паузу при дискомфорті.</p></article>
+      </div>
+      <article class="finger-map panel"><div><div class="eyebrow">Стартова позиція</div><h2>Ф І В А — О Л Д Ж</h2><p>Пальці лежать на середньому ряду, великі — над пробілом. Після кожного натискання повертай палець на базову клавішу.</p></div><div class="home-row-visual" aria-label="Стартова позиція пальців"><span class="pinky">Ф</span><span class="ring">І</span><span class="middle">В</span><span class="index">А</span><i></i><span class="index">О</span><span class="middle">Л</span><span class="ring">Д</span><span class="pinky">Ж</span></div></article>
+    </section>
+  </main>
+
+  <footer><span>Клавіші · безкоштовний тренажер</span><span>Прогрес не залишає твій пристрій</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,11 +1,11 @@
 "use strict";
 
 const BASE_LESSONS = [
-  { title: "Основна позиція", keys: "ао", text: "ао оа аа оо ао оа ааа ооо аоа оао", tip: "Тримай вказівні пальці на А та О. Відчуй маленькі виступи на клавішах." },
-  { title: "Вказівні пальці", keys: "апро", text: "пора пара опора пора папа арка про пора опора", tip: "Після Р і П повертай пальці на базові А та О." },
-  { title: "Середні пальці", keys: "авол", text: "лава овал воля ловила валова олово лава", tip: "Клавіші В і Л натискають середні пальці." },
-  { title: "Безіменні пальці", keys: "афіволд", text: "діло фіалка вода далі віл діва філолог", tip: "Не зміщуй всю кисть — працює лише потрібний палець." },
-  { title: "Увесь середній ряд", keys: "фівапролджє", text: "джерело правда поле віра орел пожежа алея", tip: "Повертай усі пальці на Ф І В А — О Л Д Ж." },
+  { title: "Основна позиція", keys: "ао", text: "аа оо ао оа аа оо ао оа ааа ооо аоа оао оао аоа аа оо ао оа аоа оао ао оа аа оо", tip: "Тримай вказівні пальці на А та О. Після кожного натискання відчуй повернення пальця на базову клавішу." },
+  { title: "Вказівні пальці", keys: "апро", text: "ап ро па ор ап ро па ор ара оро пап рор пора пара опора папа пора пара опора арка про пора опора", tip: "Після Р і П повертай пальці на базові А та О. Не прискорюйся, доки рух не стане однаковим щоразу." },
+  { title: "Середні пальці", keys: "авол", text: "ав ол ва ло ав ол ва ло ава оло вал лов лава овал воля олово лава овал воля ловила валова олово", tip: "Клавіші В і Л натискають середні пальці. Кисті не рухаються — працюють лише пальці." },
+  { title: "Безіменні пальці", keys: "афіволд", text: "фі дж іф жд фі дж іф жд фіва олдж фіва олдж діло фіалка вода далі віл діва філолог діло фіалка вода далі", tip: "Не зміщуй всю кисть — працює лише потрібний палець. Після кожної пари повернися на домашній ряд." },
+  { title: "Увесь середній ряд", keys: "фівапролджє", text: "фіва олдж фіва олдж фівапр олджє фівапр олджє правда поле віра орел джерело пожежа алея правда поле віра орел джерело", tip: "Повертай усі пальці на Ф І В А — О Л Д Ж. Тримай рівний ритм у кожній серії." },
   { title: "Верхній ряд", keys: "йцукенгшщзхї", text: "книга щука небо життя кухня жінка гуща", tip: "Тягнися пальцем угору, не піднімаючи долоню." },
   { title: "Нижній ряд", keys: "ячсмитьбю", text: "мить час сім'я місто м'яч батько щастя", tip: "До нижнього ряду веди палець, а не всю руку." },
   { title: "Великі літери", keys: "shift", text: "Київ Україна Дніпро Львів Одеса Карпати", tip: "Shift натискай мізинцем протилежної руки." },
@@ -25,7 +25,10 @@ const BASE_LESSONS = [
   { title: "Числа в роботі", keys: "1234567890", text: "Замовлення 1548 виконано на 98 відсотків за 3 дні.", tip: "Після цифри повертай палець на основний ряд." },
   { title: "Розділові знаки", keys: ",.'", text: "Так, усе готово. Пам'ятай, точність є основою.", tip: "Не поспішай біля розділових знаків і став пробіл після них." },
   { title: "Вхідний тест", keys: "all", text: "Майстерність зростає непомітно. Сьогодні ти друкуєш точніше, а завтра швидше. Продовжуй практикуватися щодня.", tip: "Цей результат стане точкою відліку для поглибленого курсу." }
-];
+].map((lesson, index) => {
+  const repetitions = index < 5 ? 1 : index < 12 ? 3 : 2;
+  return { ...lesson, text: Array(repetitions).fill(lesson.text).join(" ") };
+});
 
 // Оригінальна українська програма, побудована за принципом послідовних
 // багатокрокових вправ: рухи → слова → речення → контроль.
@@ -54,13 +57,13 @@ const SOLO_MODULES = [
 function makeSoloLessons() {
   return SOLO_MODULES.flatMap((module, moduleIndex) => {
     const words = module.words.join(" ");
-    const warmup = `${module.focus} ${module.focus} ${module.focus}`;
+    const warmup = `${module.focus} ${module.focus} ${module.focus} ${module.focus} ${module.focus} ${module.focus}`;
     const isLast = moduleIndex === SOLO_MODULES.length - 1;
     return [
       { title: `${module.name} · рухи`, keys: "all", text: warmup, tip: "Працюй повільно. Запам'ятовуй не літери, а точні рухи пальців." },
-      { title: `${module.name} · слова`, keys: "all", text: `${words} ${words}`, tip: "Точність важливіша за швидкість. Після кожного руху повертайся на основний ряд." },
-      { title: `${module.name} · речення`, keys: "all", text: `${module.sentence} ${module.sentence}`, tip: "Дивись лише на текст і тримай однаковий ритм." },
-      { title: isLast ? "Фінальний іспит" : `${module.name} · контроль`, keys: "all", text: `${words}. ${module.sentence}`, tip: isLast ? "Порівняй результат із вхідним тестом і привітай себе з завершенням курсу." : "Контрольна спроба. Зосередься на чистому наборі без виправлень." }
+      { title: `${module.name} · слова`, keys: "all", text: `${words} ${words} ${words}`, tip: "Точність важливіша за швидкість. Після кожного руху повертайся на основний ряд." },
+      { title: `${module.name} · речення`, keys: "all", text: `${module.sentence} ${module.sentence} ${module.sentence}`, tip: "Дивись лише на текст і тримай однаковий ритм." },
+      { title: isLast ? "Фінальний іспит" : `${module.name} · контроль`, keys: "all", text: `${words}. ${module.sentence} ${words}. ${module.sentence}`, tip: isLast ? "Порівняй результат із вхідним тестом і привітай себе з завершенням курсу." : "Контрольна спроба. Зосередься на чистому наборі без виправлень." }
     ];
   });
 }
@@ -104,7 +107,7 @@ const FINGER_NAMES = { pinky: "мізинець", ring: "безіменний п
 const defaultProgress = { unlocked: 1, completed: [], sessions: [], errors: {}, sound: true, lastDays: [] };
 let progress = loadProgress();
 let currentLesson = Math.min(Number(localStorage.getItem("klavishi-current")) || 0, progress.unlocked - 1);
-let targetText = "", typed = "", startedAt = null, timer = null, errors = 0, adaptiveMode = false;
+let targetText = "", typed = "", startedAt = null, timer = null, errors = 0, keystrokes = 0, adaptiveMode = false;
 let errorStreak = 0, errorsSincePause = 0, pauseTimer = null;
 
 const $ = (id) => document.getElementById(id);
@@ -141,7 +144,7 @@ function selectLesson(index) {
 }
 
 function resetExercise(customText) {
-  clearInterval(timer); clearTimeout(pauseTimer); timer = null; pauseTimer = null; startedAt = null; typed = ""; errors = 0;
+  clearInterval(timer); clearTimeout(pauseTimer); timer = null; pauseTimer = null; startedAt = null; typed = ""; errors = 0; keystrokes = 0;
   errorStreak = 0; errorsSincePause = 0; $("coachToast").hidden = true;
   const lesson = LESSONS[currentLesson]; targetText = customText || lesson.text;
   $("lessonNumber").textContent = adaptiveMode ? "Адаптивна практика" : `Урок ${currentLesson + 1}`;
@@ -186,7 +189,14 @@ function startTimer() { if (!startedAt) { startedAt = Date.now(); timer = setInt
 function metrics() {
   const seconds = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : 0;
   const correct = [...typed].filter((c, i) => c === targetText[i]).length;
-  return { seconds, wpm: seconds ? Math.round((correct / 5) / (seconds / 60)) : 0, accuracy: typed.length ? Math.round(correct / typed.length * 100) : 100 };
+  return { seconds, wpm: seconds ? Math.round((correct / 5) / (seconds / 60)) : 0, accuracy: keystrokes ? Math.round((keystrokes - errors) / keystrokes * 100) : 100 };
+}
+
+function requiredAccuracy() {
+  if (adaptiveMode) return 90;
+  if (currentLesson < 20) return 97;
+  if (currentLesson < 40) return 95;
+  return 90;
 }
 function updateStats() { const m = metrics(); els.wpm.textContent = m.wpm; els.accuracy.textContent = `${m.accuracy}%`; els.time.textContent = `${Math.floor(m.seconds / 60)}:${String(Math.floor(m.seconds % 60)).padStart(2,"0")}`; }
 function beep() { if (!progress.sound) return; try { const ctx = new AudioContext(); const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 155; g.gain.setValueAtTime(.035, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .08); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .08); } catch {} }
@@ -204,7 +214,7 @@ function handleInput(event) {
   event.preventDefault(); if (!els.completion.hidden || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key === "Backspace") { typed = typed.slice(0, -1); renderText(); highlightNext(); updateStats(); return; }
   if (event.key.length !== 1 || typed.length >= targetText.length) return;
-  startTimer(); const expected = targetText[typed.length]; typed += event.key;
+  startTimer(); keystrokes++; const expected = targetText[typed.length]; typed += event.key;
   if (event.key !== expected) { errors++; errorStreak++; errorsSincePause++; const key = expected.toLowerCase(); if (key.trim()) progress.errors[key] = (progress.errors[key] || 0) + 1; beep(); }
   else { errorStreak = 0; }
   renderText(); highlightNext(); updateStats();
@@ -213,19 +223,19 @@ function handleInput(event) {
 }
 
 function finishExercise() {
-  clearInterval(timer); timer = null; const m = metrics(); const passed = m.accuracy >= 90;
+  clearInterval(timer); timer = null; const m = metrics(); const threshold = requiredAccuracy(); const passed = m.accuracy >= threshold;
   const session = { date: new Date().toISOString(), wpm: m.wpm, accuracy: m.accuracy, seconds: Math.round(m.seconds), lesson: adaptiveMode ? "adaptive" : currentLesson };
   progress.sessions.push(session); progress.sessions = progress.sessions.slice(-50);
   if (!adaptiveMode && passed) { if (!progress.completed.includes(currentLesson)) progress.completed.push(currentLesson); progress.unlocked = Math.min(LESSONS.length, Math.max(progress.unlocked, currentLesson + 2)); }
   updateStreak(); saveProgress(); renderLessons();
   $("completionTitle").textContent = passed ? (m.accuracy >= 98 ? "Майже бездоганно!" : "Урок зараховано!") : "Спокійно. Спробуй ще раз";
   const encouragement = passed ? ENCOURAGEMENT[currentLesson % ENCOURAGEMENT.length] : "Помилка — це підказка, який рух варто повторити.";
-  $("completionSummary").textContent = `${m.wpm} слів/хв · точність ${m.accuracy}%${passed ? "" : " · потрібно 90%"} · ${encouragement}`;
+  $("completionSummary").textContent = `${m.wpm} слів/хв · точність ${m.accuracy}%${passed ? "" : ` · потрібно ${threshold}%`} · ${encouragement}`;
   $("nextButton").textContent = !passed ? "Повторити →" : currentLesson < LESSONS.length - 1 && !adaptiveMode ? "Наступний урок →" : "Ще раз →";
   els.completion.hidden = false; els.typingZone.classList.remove("focused");
 }
 function updateStreak() { const day = new Date().toISOString().slice(0,10); const days = new Set(progress.lastDays || []); days.add(day); progress.lastDays = [...days].sort().slice(-60); }
-function nextAction() { const m = metrics(); if (m.accuracy >= 90 && !adaptiveMode && currentLesson < LESSONS.length - 1) selectLesson(currentLesson + 1); else resetExercise(adaptiveMode ? buildAdaptiveText() : undefined); }
+function nextAction() { const m = metrics(); if (m.accuracy >= requiredAccuracy() && !adaptiveMode && currentLesson < LESSONS.length - 1) selectLesson(currentLesson + 1); else resetExercise(adaptiveMode ? buildAdaptiveText() : undefined); }
 
 function buildAdaptiveText() {
   const weak = Object.entries(progress.errors).sort((a,b) => b[1]-a[1]).slice(0,6).map(([k]) => k);
